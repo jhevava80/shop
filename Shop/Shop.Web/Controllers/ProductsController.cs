@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -7,22 +8,27 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Shop.Web.Data;
 using Shop.Web.Data.Entities;
+using Shop.Web.Data.IRepositories;
+using Shop.Web.Helper;
+using Shop.Web.Models;
 
 namespace Shop.Web.Controllers
 {
     public class ProductsController : Controller
     {
-        private readonly IRepository repository;
+        private readonly IProductRepository productRepository;
+        private readonly IUserHelper userHelper;
 
-        public ProductsController(IRepository _repository)
+        public ProductsController(IProductRepository productRepository, IUserHelper userHelper)
         {
-            this.repository = _repository;
+            this.productRepository = productRepository;
+            this.userHelper = userHelper;
         }
 
         // GET: Products
         public IActionResult Index()
         {
-            return View(repository.GetProducts());
+            return View(this.productRepository.GetAll());
         }
 
         // GET: Products/Details/5
@@ -33,7 +39,7 @@ namespace Shop.Web.Controllers
                 return NotFound();
             }
 
-            var product = repository.GetProduct(id.Value);
+            var product = this.productRepository.GetByIdAsync(id.Value).Result;
             if (product == null)
             {
                 return NotFound();
@@ -53,15 +59,48 @@ namespace Shop.Web.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Price,ImageUrl,LastPurchase,LastSale,IsAvaliable,Stock")] Product product)
+        public async Task<IActionResult> Create(ProductViewModel productViewModel)
         {
             if (ModelState.IsValid)
             {
-                repository.AddProduct(product);
-                await repository.SaveAllAsync();
+                var path = string.Empty;
+
+                if (productViewModel.ImageFile != null && productViewModel.ImageFile.Length> 0)
+                {
+                    path = Path.Combine(Directory.GetCurrentDirectory(),"wwwroot\\images\\products", productViewModel.ImageFile.FileName);
+                    using (var stream = new FileStream(path,FileMode.Create))
+                    {
+                        await productViewModel.ImageFile.CopyToAsync(stream);
+                    }
+
+                    path = $"~/Image/Products/{productViewModel.ImageFile.FileName}";
+                }
+                var product = this.ConvertToProduct(productViewModel,path);
+
+                //TODO: change for logged user
+                product.User = await this.userHelper.GetUserByEmailAsync("jhevava80@gmail.com");
+
+                await this.productRepository.CreateAsync(product);
+                await this.productRepository.SaveAllAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(product);
+            return View(productViewModel);
+        }
+
+        private Product ConvertToProduct(ProductViewModel productViewModel, string path)
+        {
+            return new Product
+            {
+                Id = productViewModel.Id,
+                ImageUrl = path,
+                IsAvaliable = productViewModel.IsAvaliable,
+                LastPurchase = productViewModel.LastPurchase,
+                LastSale = productViewModel.LastSale,
+                Name = productViewModel.Name,
+                Price = productViewModel.Price,
+                Stock = productViewModel.Stock,
+                User = productViewModel.User
+            };
         }
 
         // GET: Products/Edit/5
@@ -72,19 +111,36 @@ namespace Shop.Web.Controllers
                 return NotFound();
             }
 
-            var product = repository.GetProduct(id.Value);
+            var product = this.productRepository.GetByIdAsync(id.Value).Result;
             if (product == null)
             {
                 return NotFound();
             }
-            return View(product);
+            var productViewModel = this.ProductToProductViewModel(product);
+            return View(productViewModel);
+        }
+
+        private ProductViewModel ProductToProductViewModel(Product product)
+        {
+            return new ProductViewModel {
+                Id= product.Id,
+                ImageFile= null,
+                ImageUrl = product.ImageUrl,
+                IsAvaliable = product.IsAvaliable,
+                LastPurchase = product.LastPurchase,
+                LastSale = product.LastSale,
+                Name = product.Name,
+                Price =product.Price,
+                Stock = product.Stock,
+                User = product.User
+            };
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id,  Product product)
+        public async Task<IActionResult> Edit(int id,  ProductViewModel productViewModel)
         {
-            if (id != product.Id)
+            if (id != productViewModel.Id)
             {
                 return NotFound();
             }
@@ -93,12 +149,28 @@ namespace Shop.Web.Controllers
             {
                 try
                 {
-                    repository.UpdateProduct(product);
-                    await repository.SaveAllAsync();
+                    var path = productViewModel.ImageUrl;
+
+                    if (productViewModel.ImageFile != null && productViewModel.ImageFile.Length > 0)
+                    {
+                        path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\products", productViewModel.ImageFile.FileName);
+                        using (var stream = new FileStream(path, FileMode.Create))
+                        {
+                            await productViewModel.ImageFile.CopyToAsync(stream);
+                        }
+
+                        path = $"~/Image/Products/{productViewModel.ImageFile.FileName}";
+                    }
+
+                    //TODO: change for logged user
+                    productViewModel.User = await this.userHelper.GetUserByEmailAsync("jhevava80@gmail.com");
+                    var product = this.ConvertToProduct(productViewModel, path);
+                    await this.productRepository.UpdateAsync(product);
+                    await this.productRepository.SaveAllAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProductExists(product.Id))
+                    if (!ProductExists(productViewModel.Id))
                     {
                         return NotFound();
                     }
@@ -109,7 +181,7 @@ namespace Shop.Web.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(product);
+            return View(productViewModel);
         }
 
         // GET: Products/Delete/5
@@ -120,7 +192,7 @@ namespace Shop.Web.Controllers
                 return NotFound();
             }
 
-            var product = repository.GetProduct(id.Value);
+            var product = this.productRepository.GetByIdAsync(id.Value).Result;
             if (product == null)
             {
                 return NotFound();
@@ -134,15 +206,15 @@ namespace Shop.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var product = repository.GetProduct(id);
-            repository.RemoveProduct(product);
-            await repository.SaveAllAsync();
+            var product = this.productRepository.GetByIdAsync(id);
+            await this.productRepository.DeleteAsync(product.Result);
+            await this.productRepository.SaveAllAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool ProductExists(int id)
         {
-            return repository.ProductExist(id);
+            return  this.productRepository.ExistAsync(id).Result  ;
         }
     }
 }
