@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+    <UserSecretsId>46dc4609-97d6-43d4-901f-eb83954d3f52</UserSecretsId>
   </PropertyGroup>
 
 
@@ -15,6 +16,7 @@
 
   <ItemGroup>
     <Folder Include="Image\Products\" />
+    <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
 </Project>

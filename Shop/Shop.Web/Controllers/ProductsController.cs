@@ -28,7 +28,7 @@ namespace Shop.Web.Controllers
         // GET: Products
         public IActionResult Index()
         {
-            return View(this.productRepository.GetAll());
+            return View(this.productRepository.GetAll().OrderBy(p=> p.Name));
         }
 
         // GET: Products/Details/5
@@ -67,13 +67,18 @@ namespace Shop.Web.Controllers
 
                 if (productViewModel.ImageFile != null && productViewModel.ImageFile.Length> 0)
                 {
-                    path = Path.Combine(Directory.GetCurrentDirectory(),"wwwroot\\images\\products", productViewModel.ImageFile.FileName);
+                    var guid = Guid.NewGuid().ToString();
+                    string file = $"{guid}.jpg";
+
+                    path = Path.Combine(Directory.GetCurrentDirectory(),
+                        "Image\\products", 
+                        file);
                     using (var stream = new FileStream(path,FileMode.Create))
                     {
                         await productViewModel.ImageFile.CopyToAsync(stream);
                     }
 
-                    path = $"~/Image/Products/{productViewModel.ImageFile.FileName}";
+                    path = $"~/Image/Products/{file}";
                 }
                 var product = this.ConvertToProduct(productViewModel,path);
 
@@ -153,13 +158,16 @@ namespace Shop.Web.Controllers
 
                     if (productViewModel.ImageFile != null && productViewModel.ImageFile.Length > 0)
                     {
-                        path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\products", productViewModel.ImageFile.FileName);
+                        var guid = Guid.NewGuid().ToString();
+                        string file = $"{guid}.jpg";
+
+                        path = Path.Combine(Directory.GetCurrentDirectory(), "Image\\products", file);
                         using (var stream = new FileStream(path, FileMode.Create))
                         {
                             await productViewModel.ImageFile.CopyToAsync(stream);
                         }
 
-                        path = $"~/Image/Products/{productViewModel.ImageFile.FileName}";
+                        path = $"~/Image/Products/{file}";
                     }
 
                     //TODO: change for logged user

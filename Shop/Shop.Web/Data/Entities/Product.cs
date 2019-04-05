@@ -35,5 +35,18 @@ namespace Shop.Web.Data.Entities
         public double Stock { get; set; }
 
         public User User { get; set; }
+
+        //propiedad set no modifica la BD
+        public string ImageFullPath
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(this.ImageUrl))
+                {
+                    return null;
+                }
+                return $"Image\\products{this.ImageUrl.Substring(1)}";
+            }
+        }
     }
 }
