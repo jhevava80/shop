@@ -12,11 +12,18 @@ namespace Shop.UIForms.ViewModels
     {
         private readonly ApiService apiService;
         private ObservableCollection<Product> productsList;
-       
+        private bool isRefreshing;
+
+        public bool IsRefreshing
+        {
+            get => this.isRefreshing;
+            set => this.SetValue(ref this.isRefreshing, value);
+        }
+
         public ObservableCollection<Product> ProductsList
         {
-            get { return this.productsList; }
-            set { this.SetValue(ref this.productsList, value); }
+            get => this.productsList; 
+            set => this.SetValue(ref this.productsList, value); 
         }
 
         public ProductsViewModel()
@@ -27,11 +34,14 @@ namespace Shop.UIForms.ViewModels
 
         private async void LoadProducts()
         {
+            this.IsRefreshing = true;
             var response = await this.apiService.GetListAsync<Product>(
                 "https://shopweb20190405104833.azurewebsites.net",
                 "/api",
                 "/products"
                 );
+
+            this.IsRefreshing = false;
 
             if (!response.IsSucces)
             {

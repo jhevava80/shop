@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,7 @@ using Shop.Web.Models;
 
 namespace Shop.Web.Controllers
 {
+    [Authorize]
     public class ProductsController : Controller
     {
         private readonly IProductRepository productRepository;
@@ -71,14 +73,14 @@ namespace Shop.Web.Controllers
                     string file = $"{guid}.jpg";
 
                     path = Path.Combine(Directory.GetCurrentDirectory(),
-                        "Image\\products", 
+                        "wwwroot\\images\\products", 
                         file);
                     using (var stream = new FileStream(path,FileMode.Create))
                     {
                         await productViewModel.ImageFile.CopyToAsync(stream);
                     }
 
-                    path = $"~/Image/Products/{file}";
+                    path = $"~/images/products/{file}";
                 }
                 var product = this.ConvertToProduct(productViewModel,path);
 

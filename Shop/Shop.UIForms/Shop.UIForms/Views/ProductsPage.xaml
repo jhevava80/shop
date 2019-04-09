@@ -7,7 +7,7 @@
              >
     <ContentPage.Content>
         <StackLayout BindingContext="{Binding Products}" Padding="8">
-            <ListView ItemsSource="{Binding ProductsList}" HasUnevenRows="True">
+            <ListView ItemsSource="{Binding ProductsList}" HasUnevenRows="True" IsRefreshing="{Binding IsRefreshing}">
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>

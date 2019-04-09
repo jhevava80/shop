@@ -83,6 +83,9 @@ namespace Shop.Web
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+            //Usar autenticacion del framework
+            app.UseAuthentication();
+
             app.UseCookiePolicy();
 
             // que la aplicacion usa autenticacion
@@ -92,7 +95,7 @@ namespace Shop.Web
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=Products}/{action=Index}/{id?}");
+                    template: "{controller=Account}/{action=Login}/{id?}");
 
                 //routes.MapRoute(
                 //    name: "default",
