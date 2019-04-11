@@ -60,7 +60,7 @@ namespace Shop.Web.Controllers
         public IActionResult Register()
         {
             return this.View();
-        }
+        }   
 
         [HttpPost]
         public async Task<IActionResult> Register(RegisterNewUserViewModel model)

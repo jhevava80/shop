@@ -84,8 +84,7 @@ namespace Shop.Web.Controllers
                 }
                 var product = this.ConvertToProduct(productViewModel,path);
 
-                //TODO: change for logged user
-                product.User = await this.userHelper.GetUserByEmailAsync("jhevava80@gmail.com");
+                product.User = await this.userHelper.GetUserByEmailAsync(this.User.Identity.Name);
 
                 await this.productRepository.CreateAsync(product);
                 await this.productRepository.SaveAllAsync();
@@ -172,8 +171,8 @@ namespace Shop.Web.Controllers
                         path = $"~/Image/Products/{file}";
                     }
 
-                    //TODO: change for logged user
-                    productViewModel.User = await this.userHelper.GetUserByEmailAsync("jhevava80@gmail.com");
+                    productViewModel.User = await this.userHelper.GetUserByEmailAsync(this.User.Identity.Name);
+
                     var product = this.ConvertToProduct(productViewModel, path);
                     await this.productRepository.UpdateAsync(product);
                     await this.productRepository.SaveAllAsync();
