@@ -51,6 +51,7 @@ namespace Shop.Web.Controllers
         }
 
         // GET: Products/Create
+        [Authorize(Roles ="Admin")]
         public IActionResult Create()
         {
             return View();
@@ -110,6 +111,7 @@ namespace Shop.Web.Controllers
         }
 
         // GET: Products/Edit/5
+        [Authorize(Roles = "Admin")]
         public IActionResult Edit(int? id)
         {
             if (id == null)
@@ -194,6 +196,7 @@ namespace Shop.Web.Controllers
         }
 
         // GET: Products/Delete/5
+        [Authorize(Roles = "Admin, Root")]
         public IActionResult Delete(int? id)
         {
             if (id == null)

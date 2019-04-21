@@ -25,6 +25,9 @@ namespace Shop.Web.Data
         {
             await this.context.Database.EnsureCreatedAsync();
 
+            await this.userHelper.CheckRoleAsync("Admin");
+            await this.userHelper.CheckRoleAsync("Customer");
+
             //creamos usuario si no existe
             var user = await this.userHelper.GetUserByEmailAsync("jhevava80@gmail.com");
             if (user == null)
@@ -43,8 +46,15 @@ namespace Shop.Web.Data
                 {
                     throw new InvalidOperationException("could not create the user with seeder");
                 }
+
+                await this.userHelper.AddUserToRoleAsync(user, "Admin");
             }
 
+            var isUserInRole = await this.userHelper.IsUserInRoleAsync(user, "Admin");
+            if(!isUserInRole)
+            {
+                await this.userHelper.AddUserToRoleAsync(user,"Admin");
+            }
 
             //Creamos productos
             if (! this.context.Products.Any())
